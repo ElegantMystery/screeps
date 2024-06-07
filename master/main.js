@@ -19,37 +19,37 @@ module.exports.loop = function () {
         }
     }
 
-    if(harvesters.length < 2) {
+    if(harvesters.length < 3) {
         var newName = 'Harvester' + Game.time;
-        console.log('Spawning new harvester: ' + newName);
+        //console.log('Spawning new harvester: ' + newName);
         Game.spawns[SPAWN_NAME].spawnCreep([WORK,WORK,MOVE], newName,
             {memory: {role: 'harvester'}});
     }
 
     if(upgraders.length < 1) {
         var newName = 'Upgrader' + Game.time;
-        console.log('Spawning new upgrader: ' + newName);
+        //console.log('Spawning new upgrader: ' + newName);
         Game.spawns[SPAWN_NAME].spawnCreep([WORK,CARRY,MOVE], newName,
             {memory: {role: 'upgrader'}});
     }
 
-    if(builders.length < 2) {
+    if(builders.length < 3) {
         var newName = 'Builder' + Game.time;
-        console.log('Spawning new builder: ' + newName);
+        //console.log('Spawning new builder: ' + newName);
         Game.spawns[SPAWN_NAME].spawnCreep([WORK,CARRY,MOVE], newName,
             {memory: {role: 'builder'}});
     }
 
     if(carriers.length < 2) {
         var newName = 'Carrier' + Game.time;
-        console.log('Spawning new carrier: ' + newName);
+        //console.log('Spawning new carrier: ' + newName);
         Game.spawns[SPAWN_NAME].spawnCreep([CARRY,MOVE, MOVE], newName,
             {memory: {role: 'carrier'}});
     }
 
     if(repairmen.length < 1) {
         var newName = 'Repairman' + Game.time;
-        console.log('Spawning new repairman: ' + newName);
+        //console.log('Spawning new repairman: ' + newName);
         Game.spawns[SPAWN_NAME].spawnCreep([CARRY,WORK, MOVE], newName,
             {memory: {role: 'repairman'}});
     }
