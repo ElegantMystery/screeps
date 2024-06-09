@@ -2,17 +2,18 @@ const { SPAWN_NAME } = require('./constant');
 
 var roleRepairman = {
     run: function(creep) {
-        if(creep.memory.repairing && creep.store[RESOURCE_ENERGY] == 0) {
+        if(creep.memory.repairing && creep.store[RESOURCE_ENERGY] === 0) {
             creep.memory.repairing = false;
         }
-        if(!creep.memory.repairing && creep.store.getFreeCapacity() == 0) {
+        if(!creep.memory.repairing && creep.store.getFreeCapacity() === 0) {
             creep.memory.repairing = true;
         }
 
         if(creep.memory.repairing) {
             var targets = creep.room.find(FIND_STRUCTURES, {
                 filter: (structure) => {
-                    return structure.structureType != STRUCTURE_WALL &&
+                    return structure.structureType !== STRUCTURE_WALL &&
+                        structure.structureType !== STRUCTURE_RAMPART &&
                         structure.hits < structure.hitsMax;
                 }
             });
@@ -20,14 +21,14 @@ var roleRepairman = {
             targets.sort((a,b) => a.hits - b.hits);
 
             if(targets.length > 0) {
-                if(creep.repair(targets[0]) == ERR_NOT_IN_RANGE) {
+                if(creep.repair(targets[0]) === ERR_NOT_IN_RANGE) {
                     creep.moveTo(targets[0]);
                 }
             }
         }else {
             var targets = creep.room.find(FIND_STRUCTURES, {
                 filter : (structure) => {
-                    return structure.structureType == STRUCTURE_CONTAINER &&
+                    return structure.structureType === STRUCTURE_CONTAINER &&
                         structure.store[RESOURCE_ENERGY] > 0;
                 }
             });
