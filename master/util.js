@@ -17,5 +17,23 @@ function buildPath() {
     });
 }
 
-module.exports.buildPath = buildPath;
+function createCreepBody({numWork = 0, numCarry = 0, numMove = 0,
+                          numAttack = 0, numRangedAttack = 0, numHeal = 0,
+                          numClaim = 0, numTough = 0} ) {
+    const bodyParts = [];
+    bodyParts.push(...Array(numWork).fill(WORK));
+    bodyParts.push(...Array(numCarry).fill(CARRY));
+    bodyParts.push(...Array(numMove).fill(MOVE));
+    bodyParts.push(...Array(numAttack).fill(ATTACK));
+    bodyParts.push(...Array(numRangedAttack).fill(RANGED_ATTACK));
+    bodyParts.push(...Array(numHeal).fill(HEAL));
+    bodyParts.push(...Array(numClaim).fill(CLAIM));
+    bodyParts.push(...Array(numTough).fill(TOUGH));
+    return bodyParts;
+}
+
+module.exports = {
+    buildPath,
+    createCreepBody
+};
 

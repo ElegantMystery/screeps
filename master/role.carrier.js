@@ -1,5 +1,5 @@
 const { SPAWN_NAME } = require('./constant');
-const { storeEnergy, collectDroppedEnergy, getDroppedEnergy, collectEnergyFromStorage} = require('./creep.functions');
+const { storeEnergy, collectDroppedEnergy, getDroppedEnergy, collectEnergyFromStorage, getEnergyFromStorageLink, collectEnergyFromStorageLink,} = require('./creep.functions');
 
 const roleCarrier = {
     run: function (creep) {
@@ -10,7 +10,9 @@ const roleCarrier = {
             creep.memory.collecting = false;
         }
         if (creep.memory.collecting) {
-            if(getDroppedEnergy(creep)) {
+            if(getEnergyFromStorageLink(creep)) {
+                collectEnergyFromStorageLink(creep);
+            }else if(getDroppedEnergy(creep)) {
                 collectDroppedEnergy(creep);
             }else {
                 collectEnergyFromStorage(creep);

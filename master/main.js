@@ -1,21 +1,27 @@
 const roleHarvester = require('role.harvester');
 const roleUpgrader = require('role.upgrader');
-const roleBuilder = require('role.builder')
+const roleBuilder = require('role.builder');
 const roleCarrier = require('role.carrier');
-const roleRepairman = require('role.repairman')
-const roleRescuer = require('role.rescuer')
+const roleRepairman = require('role.repairman');
+const roleRescuer = require('role.rescuer');
+const roleMiner = require('role.miner');
 
 const runTower = require('tower')
 
 const { SPAWN_NAME } = require('./constant');
+const { checkHarvesterBySourceId } = require('./creep.functions');
+const { createCreepBody } = require('./util');
+const {manageLink, getMineralAmount} = require("./room.functions");
 
 module.exports.loop = function () {
+    const room = Game.spawns[SPAWN_NAME].room;
     const harvesters = _.filter(Game.creeps, (creep) => creep.memory.role === 'harvester');
     const upgraders = _.filter(Game.creeps, (creep) => creep.memory.role === 'upgrader');
     const builders = _.filter(Game.creeps, (creep) => creep.memory.role === 'builder');
     const carriers = _.filter(Game.creeps, (creep) => creep.memory.role === 'carrier');
     const repairmen = _.filter(Game.creeps, (creep) => creep.memory.role === 'repairman');
     const rescuers = _.filter(Game.creeps, (creep) => creep.memory.role === 'rescuer');
+    const miners = _.filter(Game.creeps, (creep) => creep.memory.role === 'miner');
 
     for(var nameInMemory in Memory.creeps) {
         if(!Game.creeps[nameInMemory]) {
@@ -24,49 +30,50 @@ module.exports.loop = function () {
     }
     if((harvesters.length < 1 || carriers < 1) && rescuers < 1) {
         const newName = 'Rescuer' + Game.time;
-        //console.log('Spawning new carrier: ' + newName);
-        Game.spawns[SPAWN_NAME].spawnCreep([CARRY,WORK,MOVE], newName,
+        Game.spawns[SPAWN_NAME].spawnCreep(createCreepBody({numWork: 1, numMove: 1, numCarry: 1}), newName,
             {memory: {role: 'rescuer'}});
+    }
+
+    if(carriers.length < 2) {
+        const newName = 'Carrier' + Game.time;
+        Game.spawns[SPAWN_NAME].spawnCreep(createCreepBody({numCarry: 9, numMove: 9}), newName,
+            {memory: {role: 'carrier'}});
     }
 
     if(harvesters.length < 2) {
         const newName = 'Harvester' + Game.time;
         const sources = Game.spawns[SPAWN_NAME].room.find(FIND_SOURCES);
         if(checkHarvesterBySourceId(SPAWN_NAME, sources[0].id)) {
-            Game.spawns[SPAWN_NAME].spawnCreep([WORK,WORK,WORK,WORK,WORK,WORK,WORK,MOVE,MOVE], newName,
+            Game.spawns[SPAWN_NAME].spawnCreep(createCreepBody({numWork: 7, numMove: 2}), newName,
                 {memory: {role: 'harvester', sourceId: sources[1].id}});
         }else {
-            Game.spawns[SPAWN_NAME].spawnCreep([WORK,WORK,WORK,WORK,WORK,WORK,WORK,MOVE,MOVE], newName,
+            Game.spawns[SPAWN_NAME].spawnCreep(createCreepBody({numWork: 7, numMove: 2}), newName,
                 {memory: {role: 'harvester', sourceId: sources[0].id}});
         }
     }
 
-    if(carriers.length < 2) {
-        const newName = 'Carrier' + Game.time;
-        //console.log('Spawning new carrier: ' + newName);
-        Game.spawns[SPAWN_NAME].spawnCreep([CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE], newName,
-            {memory: {role: 'carrier'}});
-    }
-
     if(upgraders.length < 2) {
         const newName = 'Upgrader' + Game.time;
-        //console.log('Spawning new upgrader: ' + newName);
-        Game.spawns[SPAWN_NAME].spawnCreep([WORK,WORK,WORK,WORK,WORK,CARRY,CARRY,MOVE,MOVE], newName,
+        Game.spawns[SPAWN_NAME].spawnCreep(createCreepBody({numWork: 8, numCarry: 4, numMove: 4}), newName,
             {memory: {role: 'upgrader'}});
     }
 
-    if(builders.length < 1) {
+    if(builders.length < 0) {
         const newName = 'Builder' + Game.time;
-        //console.log('Spawning new builder: ' + newName);
-        Game.spawns[SPAWN_NAME].spawnCreep([WORK,WORK,WORK,WORK,WORK,CARRY,CARRY,MOVE,MOVE], newName,
+        Game.spawns[SPAWN_NAME].spawnCreep(createCreepBody({numWork: 8, numCarry: 4, numMove: 4}), newName,
             {memory: {role: 'builder'}});
     }
 
+    if(miners.length < 1 && getMineralAmount(room)) {
+        const newName = 'Miner' + Game.time;
+        Game.spawns[SPAWN_NAME].spawnCreep(createCreepBody({numWork: 8, numCarry: 4, numMove: 4}), newName,
+            {memory: {role: 'miner'}});
+    }
 
-    if(repairmen.length < 1) {
+
+    if(repairmen.length < 0) {
         const newName = 'Repairman' + Game.time;
-        //console.log('Spawning new repairman: ' + newName);
-        Game.spawns[SPAWN_NAME].spawnCreep([CARRY,CARRY,WORK,WORK, MOVE], newName,
+        Game.spawns[SPAWN_NAME].spawnCreep(createCreepBody({numWork: 8, numCarry: 4, numMove: 4}), newName,
             {memory: {role: 'repairman'}});
     }
 
@@ -90,6 +97,9 @@ module.exports.loop = function () {
         if(creep.memory.role === 'rescuer') {
             roleRescuer.run(creep);
         }
+        if(creep.memory.role === 'miner') {
+            roleMiner.run(creep);
+        }
     }
 
     const towers = Game.spawns[SPAWN_NAME].room.find(FIND_STRUCTURES, {
@@ -102,14 +112,6 @@ module.exports.loop = function () {
     for(let tower of towers) {
         runTower(tower);
     }
-}
 
-function checkHarvesterBySourceId(spawnName, sourceId) {
-    const creeps = Game.spawns[spawnName].room.find(FIND_MY_CREEPS, {
-        filter: (creep) => {
-            return creep.memory.role === 'harvester' && creep.memory.sourceId === sourceId;
-        }
-    });
-
-    return creeps.length > 0;
+    //manageLink();
 }

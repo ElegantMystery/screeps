@@ -1,3 +1,5 @@
+const { STORAGE_LINK } = require('./constant');
+
 function collectEnergyFromStorage(creep) {
     const targets = creep.room.find(FIND_STRUCTURES, {
         filter : (structure) => {
@@ -10,6 +12,18 @@ function collectEnergyFromStorage(creep) {
         if(creep.withdraw(targets[0], RESOURCE_ENERGY) === ERR_NOT_IN_RANGE) {
             creep.moveTo(targets[0], {visualizePathStyle: {stroke: '#ffaa00'}});
         }
+    }
+}
+
+function getEnergyFromStorageLink(creep) {
+    const link = Game.getObjectById(STORAGE_LINK);
+    return link.store.getFreeCapacity(RESOURCE_LEMERGIUM) === 0;
+
+}
+function collectEnergyFromStorageLink(creep) {
+    const link = Game.getObjectById(STORAGE_LINK);
+    if(creep.withdraw(link, RESOURCE_LEMERGIUM) === ERR_NOT_IN_RANGE) {
+        creep.moveTo(link, {visualizePathStyle: {stroke: '#ffaa00'}});
     }
 }
 
@@ -55,6 +69,7 @@ function storeEnergy(creep) {
                     structure.structureType === STRUCTURE_CONTAINER ||
                     structure.structureType === STRUCTURE_EXTENSION ||
                     structure.structureType === STRUCTURE_STORAGE ||
+                    structure === Game.getObjectById('666769b480326ac5879d580a')||
                     // Only tower below 70% energy will be refilled
                     (structure.structureType === STRUCTURE_TOWER && structure.store.getFreeCapacity(RESOURCE_ENERGY) > 300)) &&
                 structure.store.getFreeCapacity(RESOURCE_ENERGY) > 0;
@@ -68,6 +83,7 @@ function storeEnergy(creep) {
                 [STRUCTURE_SPAWN]: 1,
                 [STRUCTURE_EXTENSION]: 2,
                 [STRUCTURE_TOWER]: 3,
+                [STRUCTURE_LINK]: 4,
                 [STRUCTURE_CONTAINER]: 4,
                 [STRUCTURE_STORAGE]: 5
             }
@@ -88,11 +104,45 @@ function storeEnergy(creep) {
     }
 }
 
+function storeMineral(creep, mineral) {
+    const target = creep.room.storage;
+    if (creep.transfer(target, mineral) === ERR_NOT_IN_RANGE) {
+        creep.moveTo(target, {visualizePathStyle: {stroke: '#ffffff'}});
+    }
+}
+
+function checkHarvesterBySourceId(spawnName, sourceId) {
+    const creeps = Game.spawns[spawnName].room.find(FIND_MY_CREEPS, {
+        filter: (creep) => {
+            return creep.memory.role === 'harvester' && creep.memory.sourceId === sourceId;
+        }
+    });
+
+    return creeps.length > 0;
+}
+
+function getMineralType(creep) {
+    // Check each resource type in the creep's store
+    for (const resourceType in creep.store) {
+        if (resourceType !== RESOURCE_ENERGY && creep.store[resourceType] > 0) {
+            // Assuming the creep could be carrying any type of mineral or compound
+            console.log('Creep is carrying:', resourceType, 'Amount:', creep.store[resourceType]);
+            return resourceType; // Returns the first found mineral type
+        }
+    }
+    return null; // Returns null if the creep has no minerals
+}
+
 
 module.exports = {
     collectEnergyFromStorage,
     buildStructure,
     storeEnergy,
     collectDroppedEnergy,
-    getDroppedEnergy
+    getDroppedEnergy,
+    checkHarvesterBySourceId,
+    collectEnergyFromStorageLink,
+    getEnergyFromStorageLink,
+    getMineralType,
+    storeMineral
 };
