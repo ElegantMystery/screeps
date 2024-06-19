@@ -5,13 +5,15 @@ const roleCarrier = require('role.carrier');
 const roleRepairman = require('role.repairman');
 const roleRescuer = require('role.rescuer');
 const roleMiner = require('role.miner');
+const roleRemoteHaverster = require('role.remoteHarvester');
+const roleScout = require('role.scout');
 
 const runTower = require('tower')
 
-const { SPAWN_NAME } = require('./constant');
-const { checkHarvesterBySourceId } = require('./creep.functions');
+const { SPAWN_NAME, EAST_NEIGHBOR_ROOM_NAME, EAST_NEIGHBOR_LINK, STORAGE_LINK, MAIN_ROOM_NAME} = require('./constant');
+const { checkHarvesterBySourceId } = require('./room.functions');
 const { createCreepBody } = require('./util');
-const {manageLink, getMineralAmount} = require("./room.functions");
+const { manageLink, getMineralAmount, findResourceByRoom } = require("./room.functions");
 
 module.exports.loop = function () {
     const room = Game.spawns[SPAWN_NAME].room;
@@ -22,12 +24,15 @@ module.exports.loop = function () {
     const repairmen = _.filter(Game.creeps, (creep) => creep.memory.role === 'repairman');
     const rescuers = _.filter(Game.creeps, (creep) => creep.memory.role === 'rescuer');
     const miners = _.filter(Game.creeps, (creep) => creep.memory.role === 'miner');
+    const remoteHarvesters = _.filter(Game.creeps, (creep) => creep.memory.role === 'remoteHarvester');
+    const scouts = _.filter(Game.creeps, (creep) => creep.memory.role === 'scout');
 
     for(var nameInMemory in Memory.creeps) {
         if(!Game.creeps[nameInMemory]) {
             delete Memory.creeps[nameInMemory];
         }
     }
+
     if((harvesters.length < 1 || carriers < 1) && rescuers < 1) {
         const newName = 'Rescuer' + Game.time;
         Game.spawns[SPAWN_NAME].spawnCreep(createCreepBody({numWork: 1, numMove: 1, numCarry: 1}), newName,
@@ -43,7 +48,7 @@ module.exports.loop = function () {
     if(harvesters.length < 2) {
         const newName = 'Harvester' + Game.time;
         const sources = Game.spawns[SPAWN_NAME].room.find(FIND_SOURCES);
-        if(checkHarvesterBySourceId(SPAWN_NAME, sources[0].id)) {
+        if(checkHarvesterBySourceId(MAIN_ROOM_NAME, 'harvester', sources[0].id)) {
             Game.spawns[SPAWN_NAME].spawnCreep(createCreepBody({numWork: 7, numMove: 2}), newName,
                 {memory: {role: 'harvester', sourceId: sources[1].id}});
         }else {
@@ -58,7 +63,7 @@ module.exports.loop = function () {
             {memory: {role: 'upgrader'}});
     }
 
-    if(builders.length < 0) {
+    if(builders.length < 1 && room.find(FIND_CONSTRUCTION_SITES).length > 0) {
         const newName = 'Builder' + Game.time;
         Game.spawns[SPAWN_NAME].spawnCreep(createCreepBody({numWork: 8, numCarry: 4, numMove: 4}), newName,
             {memory: {role: 'builder'}});
@@ -68,6 +73,24 @@ module.exports.loop = function () {
         const newName = 'Miner' + Game.time;
         Game.spawns[SPAWN_NAME].spawnCreep(createCreepBody({numWork: 8, numCarry: 4, numMove: 4}), newName,
             {memory: {role: 'miner'}});
+    }
+
+    if(remoteHarvesters.length < 2) {
+        const resources = findResourceByRoom(EAST_NEIGHBOR_ROOM_NAME);
+        const newName = 'RemoteHarvester' + Game.time;
+        if(checkHarvesterBySourceId(EAST_NEIGHBOR_ROOM_NAME, 'remoteHarvester', resources[0].id)) {
+            Game.spawns[SPAWN_NAME].spawnCreep(createCreepBody({numWork: 7, numCarry: 7, numMove: 7}), newName,
+                {memory: {role: 'remoteHarvester', sourceId: resources[1].id}});
+        }else {
+            Game.spawns[SPAWN_NAME].spawnCreep(createCreepBody({numWork: 7, numCarry: 7, numMove: 7}), newName,
+                {memory: {role: 'remoteHarvester', sourceId: resources[0].id}});
+        }
+    }
+
+    if(scouts.length < 1) {
+        const newName = 'Scout' + Game.time;
+        Game.spawns[SPAWN_NAME].spawnCreep(createCreepBody({numMove: 4}), newName,
+            {memory: {role: 'scout'}});
     }
 
 
@@ -100,6 +123,12 @@ module.exports.loop = function () {
         if(creep.memory.role === 'miner') {
             roleMiner.run(creep);
         }
+        if(creep.memory.role === 'remoteHarvester') {
+            roleRemoteHaverster.run(creep);
+        }
+        if(creep.memory.role === 'scout') {
+            roleScout.run(creep);
+        }
     }
 
     const towers = Game.spawns[SPAWN_NAME].room.find(FIND_STRUCTURES, {
@@ -113,5 +142,5 @@ module.exports.loop = function () {
         runTower(tower);
     }
 
-    //manageLink();
+    manageLink(EAST_NEIGHBOR_LINK, STORAGE_LINK);
 }

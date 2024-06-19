@@ -1,5 +1,5 @@
 const { getMineralType } = require('./creep.functions');
-const { storeMineral } = require('creep.functions')
+const { storeMineral, getDroppedMineral, collectDroppedMineral } = require('creep.functions')
 
 const roleMiner = {
     run: function(creep) {
@@ -16,23 +16,27 @@ const roleMiner = {
             creep.memory.collecting = false;
         }
         if(creep.memory.collecting) {
-            const mineral = Game.getObjectById(creep.memory.mineralId);
+            if(getDroppedMineral(creep)) {
+                collectDroppedMineral(creep);
+            }else {
+                const mineral = Game.getObjectById(creep.memory.mineralId);
 
-            // Check if there is an extractor and it's not on cooldown
-            const extractor = mineral.pos.findInRange(FIND_STRUCTURES, 1, {
-                filter: { structureType: STRUCTURE_EXTRACTOR }
-            })[0];
-            if (extractor && !extractor.cooldown) {
-                // Mine the mineral if the creep is next to it
-                if (creep.pos.isNearTo(mineral)) {
-                    creep.harvest(mineral);
-                } else {
-                    // Move to the mineral if not nearby
-                    creep.moveTo(mineral, {visualizePathStyle: {stroke: '#ffaa00'}});
+                // Check if there is an extractor and it's not on cooldown
+                const extractor = mineral.pos.findInRange(FIND_STRUCTURES, 1, {
+                    filter: { structureType: STRUCTURE_EXTRACTOR }
+                })[0];
+                if (extractor && !extractor.cooldown) {
+                    // Mine the mineral if the creep is next to it
+                    if (creep.pos.isNearTo(mineral)) {
+                        creep.harvest(mineral);
+                    } else {
+                        // Move to the mineral if not nearby
+                        creep.moveTo(mineral, {visualizePathStyle: {stroke: '#ffaa00'}});
+                    }
                 }
             }
         }else {
-            storeMineral(creep, RESOURCE_LEMERGIUM);
+            storeMineral(creep);
         }
     }
 };
