@@ -1,4 +1,3 @@
-const { SPAWN_NAME } = require('./constant');
 const { storeEnergy, collectDroppedEnergy, getDroppedEnergy, collectEnergyFromStorage, getEnergyFromStorageLink, collectEnergyFromStorageLink,} = require('./creep.functions');
 
 const roleCarrier = {

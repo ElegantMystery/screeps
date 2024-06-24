@@ -15,7 +15,7 @@ function findStructuresInHealRange(tower) {
         filter: (structure) => {
             return tower.pos.getRangeTo(structure) <= healRange &&
                 structure.structureType !== STRUCTURE_WALL &&
-                ((structure.structureType === STRUCTURE_RAMPART && structure.hits < structure.hitsMax / 30)
+                ((structure.structureType === STRUCTURE_RAMPART && structure.hits < structure.hitsMax / 100)
                     || (structure.structureType !== STRUCTURE_RAMPART && structure.hits < structure.hitsMax));
         }
     });

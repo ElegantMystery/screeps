@@ -15,7 +15,7 @@ function collectEnergyFromStorage(creep) {
     }
 }
 
-function getEnergyFromStorageLink(creep) {
+function getEnergyFromStorageLink() {
     const link = Game.getObjectById(STORAGE_LINK);
     return link.store.getUsedCapacity(RESOURCE_ENERGY) > 0;
 }
@@ -61,12 +61,6 @@ function getDroppedEnergy(creep) {
     return droppedEnergy[0];
 }
 
-function getDroppedMineral(creep) {
-    const droppedMinerals = creep.room.find(FIND_DROPPED_RESOURCES, {
-        filter: (resource) => resource.resourceType !== RESOURCE_ENERGY
-    });
-    return droppedMinerals.length > 0;
-}
 
 function collectDroppedMineral(creep) {
     const droppedMinerals = creep.room.find(FIND_DROPPED_RESOURCES, {
@@ -77,6 +71,23 @@ function collectDroppedMineral(creep) {
     }
 }
 
+function collectCommodityFromFactory(creep, commodityType) {
+    const factory = creep.room.find(FIND_STRUCTURES, {
+        filter: (structure) => structure.structureType === STRUCTURE_FACTORY
+    });
+
+    if(creep.withdraw(factory[0], commodityType) === ERR_NOT_IN_RANGE) {
+        creep.moveTo(factory[0], {visualizePathStyle: {stroke: '#ffaa00'}});
+    }
+}
+
+function storeCommodityToTerminal(creep, commodityType) {
+    const terminal = creep.room.terminal;
+    if (creep.transfer(terminal, commodityType) === ERR_NOT_IN_RANGE) {
+        creep.moveTo(terminal , {visualizePathStyle: {stroke: '#143ab7'}});
+    }
+}
+
 function storeEnergy(creep) {
     const targets = creep.room.find(FIND_STRUCTURES, {
         filter: (structure) => {
@@ -84,6 +95,7 @@ function storeEnergy(creep) {
                     structure.structureType === STRUCTURE_CONTAINER ||
                     structure.structureType === STRUCTURE_EXTENSION ||
                     structure.structureType === STRUCTURE_STORAGE ||
+                    (structure.structureType === STRUCTURE_TERMINAL  && structure.store.getUsedCapacity(RESOURCE_ENERGY) < 1000) ||
                     structure === Game.getObjectById('666769b480326ac5879d580a')||
                     // Only tower below 70% energy will be refilled
                     (structure.structureType === STRUCTURE_TOWER && structure.store.getFreeCapacity(RESOURCE_ENERGY) > 300)) &&
@@ -98,7 +110,7 @@ function storeEnergy(creep) {
                 [STRUCTURE_SPAWN]: 1,
                 [STRUCTURE_EXTENSION]: 2,
                 [STRUCTURE_TOWER]: 3,
-                [STRUCTURE_LINK]: 4,
+                [STRUCTURE_TERMINAL]: 3,
                 [STRUCTURE_CONTAINER]: 4,
                 [STRUCTURE_STORAGE]: 4
             }
@@ -120,10 +132,10 @@ function storeEnergy(creep) {
 }
 
 function storeMineral(creep) {
-    const target = creep.room.storage;
-    if (creep.transfer(target, _.findKey(creep.store)) === ERR_NOT_IN_RANGE) {
-        creep.moveTo(target, {visualizePathStyle: {stroke: '#1dc52b'}});
-    }
+        const target = creep.room.storage;
+        if (creep.transfer(target, _.findKey(creep.store)) === ERR_NOT_IN_RANGE) {
+            creep.moveTo(target, {visualizePathStyle: {stroke: '#1dc52b'}});
+        }
 }
 
 
@@ -162,7 +174,8 @@ module.exports = {
     getMineralType,
     storeMineral,
     borderPosition,
-    getDroppedMineral,
     collectDroppedMineral,
-    storeLink
+    storeLink,
+    collectCommodityFromFactory,
+    storeCommodityToTerminal
 };
