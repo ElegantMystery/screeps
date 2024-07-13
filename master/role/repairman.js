@@ -1,6 +1,4 @@
-const { SPAWN_NAME } = require('./constant');
-
-var roleRepairman = {
+var repairman = {
     run: function(creep) {
         if(creep.memory.repairing && creep.store[RESOURCE_ENERGY] === 0) {
             creep.memory.repairing = false;
@@ -41,4 +39,4 @@ var roleRepairman = {
     }
 };
 
-module.exports = roleRepairman;
+module.exports = repairman;

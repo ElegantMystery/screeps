@@ -1,4 +1,4 @@
-const {MAIN_ROOM} = require("./constant");
+const {MAIN_ROOM} = require("constant");
 
 function buildPath() {
     const room = Game.rooms[MAIN_ROOM];
@@ -18,8 +18,8 @@ function buildPath() {
 }
 
 function createCreepBody({numWork = 0, numCarry = 0, numMove = 0,
-                          numAttack = 0, numRangedAttack = 0, numHeal = 0,
-                          numClaim = 0, numTough = 0} ) {
+                             numAttack = 0, numRangedAttack = 0, numHeal = 0,
+                             numClaim = 0, numTough = 0} ) {
     const bodyParts = [];
     bodyParts.push(...Array(numWork).fill(WORK));
     bodyParts.push(...Array(numCarry).fill(CARRY));

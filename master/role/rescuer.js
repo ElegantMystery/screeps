@@ -1,6 +1,6 @@
-const { storeEnergy, collectEnergyFromStorage } = require('./creep.functions')
+const { storeEnergy, collectEnergyFromStorage } = require('creep.functions')
 
-const roleRescuer = {
+const rescuer = {
     run: function(creep) {
         if (!creep.memory.collecting && creep.store[RESOURCE_ENERGY] === 0) {
             creep.memory.collecting = true;
@@ -16,4 +16,4 @@ const roleRescuer = {
     }
 };
 
-module.exports = roleRescuer
+module.exports = rescuer

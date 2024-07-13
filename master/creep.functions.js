@@ -1,4 +1,4 @@
-const { STORAGE_LINK } = require('./constant');
+const { STORAGE_LINK } = require('constant');
 
 function collectEnergyFromStorage(creep) {
     const targets = creep.room.find(FIND_STRUCTURES, {
@@ -12,18 +12,17 @@ function collectEnergyFromStorage(creep) {
         if(creep.withdraw(targets[0], RESOURCE_ENERGY) === ERR_NOT_IN_RANGE) {
             creep.moveTo(targets[0], {visualizePathStyle: {stroke: '#ffaa00'}});
         }
+    }else {
+        collectDroppedEnergy(creep);
     }
 }
 
-function getEnergyFromStorageLink() {
-    const link = Game.getObjectById(STORAGE_LINK);
-    return link.store.getUsedCapacity(RESOURCE_ENERGY) > 0;
-}
 function collectEnergyFromStorageLink(creep) {
     const link = Game.getObjectById(STORAGE_LINK);
-    if(creep.withdraw(link, RESOURCE_ENERGY) === ERR_NOT_IN_RANGE) {
+    if(link.store.getUsedCapacity(RESOURCE_ENERGY) > 0 && creep.withdraw(link, RESOURCE_ENERGY) === ERR_NOT_IN_RANGE) {
         creep.moveTo(link, {visualizePathStyle: {stroke: '#ffaa00'}});
     }
+    return link.store.getUsedCapacity(RESOURCE_ENERGY) > 0;
 }
 
 function buildStructure(creep) {
@@ -36,6 +35,7 @@ function buildStructure(creep) {
 }
 
 function collectDroppedEnergy(creep) {
+    let result = false;
     const droppedEnergy = creep.room.find(FIND_DROPPED_RESOURCES, {
         filter: (resource) => resource.resourceType === RESOURCE_ENERGY
     });
@@ -43,32 +43,29 @@ function collectDroppedEnergy(creep) {
     if(droppedEnergy.length > 0) {
         droppedEnergy.sort((a, b) => b.energy - a.energy);
         const closestEnergy = droppedEnergy[0];
-
-        if (creep.pickup(closestEnergy) === ERR_NOT_IN_RANGE) {
-            creep.moveTo(closestEnergy, {visualizePathStyle: {stroke: '#ffaa00'}});
+        if(closestEnergy.amount > creep.store.getFreeCapacity() / 2) {
+            result = true;
+            if (creep.pickup(closestEnergy) === ERR_NOT_IN_RANGE) {
+                creep.moveTo(closestEnergy, {visualizePathStyle: {stroke: '#ffaa00'}});
+            }
         }
     }
-}
-
-function getDroppedEnergy(creep) {
-    const droppedEnergy = creep.room.find(FIND_DROPPED_RESOURCES, {
-        filter: (resource) => resource.resourceType === RESOURCE_ENERGY
-    });
-
-    if(droppedEnergy.length > 0) {
-        droppedEnergy.sort((a, b) => b.energy - a.energy);
-    }
-    return droppedEnergy[0];
+    return result;
 }
 
 
 function collectDroppedMineral(creep) {
+    let result = false;
     const droppedMinerals = creep.room.find(FIND_DROPPED_RESOURCES, {
         filter: (resource) => resource.resourceType !== RESOURCE_ENERGY
     });
-    if (creep.pickup(droppedMinerals[0]) === ERR_NOT_IN_RANGE) {
-        creep.moveTo(droppedMinerals[0], {visualizePathStyle: {stroke: '#ffaa00'}});
+    if(droppedMinerals.length > 0) {
+        result = true;
+        if (creep.pickup(droppedMinerals[0]) === ERR_NOT_IN_RANGE) {
+            creep.moveTo(droppedMinerals[0], {visualizePathStyle: {stroke: '#ffaa00'}});
+        }
     }
+    return result;
 }
 
 function collectCommodityFromFactory(creep, commodityType) {
@@ -132,24 +129,12 @@ function storeEnergy(creep) {
 }
 
 function storeMineral(creep) {
-        const target = creep.room.storage;
-        if (creep.transfer(target, _.findKey(creep.store)) === ERR_NOT_IN_RANGE) {
-            creep.moveTo(target, {visualizePathStyle: {stroke: '#1dc52b'}});
-        }
-}
-
-
-function getMineralType(creep) {
-    // Check each resource type in the creep's store
-    for (const resourceType in creep.store) {
-        if (resourceType !== RESOURCE_ENERGY && creep.store[resourceType] > 0) {
-            // Assuming the creep could be carrying any type of mineral or compound
-            console.log('Creep is carrying:', resourceType, 'Amount:', creep.store[resourceType]);
-            return resourceType; // Returns the first found mineral type
-        }
+    const target = creep.room.storage;
+    if (creep.transfer(target, _.findKey(creep.store)) === ERR_NOT_IN_RANGE) {
+        creep.moveTo(target, {visualizePathStyle: {stroke: '#1dc52b'}});
     }
-    return null; // Returns null if the creep has no minerals
 }
+
 
 function borderPosition(creep) {
     return creep.pos.x === 0 || creep.pos.y === 0 || creep.pos.x === 49 || creep.pos.y === 49;
@@ -168,10 +153,7 @@ module.exports = {
     buildStructure,
     storeEnergy,
     collectDroppedEnergy,
-    getDroppedEnergy,
     collectEnergyFromStorageLink,
-    getEnergyFromStorageLink,
-    getMineralType,
     storeMineral,
     borderPosition,
     collectDroppedMineral,

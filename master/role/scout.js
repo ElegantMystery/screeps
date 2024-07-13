@@ -1,8 +1,8 @@
 const { EAST_NEIGHBOR_ROOM_NAME } = require("constant");
 
-const roleScout = {
+const scout = {
     run: function(creep) {
-        const targetRoom = EAST_NEIGHBOR_ROOM_NAME; // replace with the room you need to scout
+        const targetRoom = creep.memory.targetRoom; // replace with the room you need to scout
         if (creep.room.name !== targetRoom) {
             const exitDir = Game.map.findExit(creep.room, targetRoom);
             const exit = creep.pos.findClosestByRange(exitDir);
@@ -13,4 +13,4 @@ const roleScout = {
     }
 };
 
-module.exports = roleScout;
+module.exports = scout;

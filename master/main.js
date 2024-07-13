@@ -1,112 +1,45 @@
-const roleHarvester = require('role.harvester');
-const roleUpgrader = require('role.upgrader');
-const roleBuilder = require('role.builder');
-const roleCarrier = require('role.carrier');
-const roleRepairman = require('role.repairman');
-const roleRescuer = require('role.rescuer');
-const roleMiner = require('role.miner');
-const roleRemoteHaverster = require('role.remoteHarvester');
-const roleScout = require('role.scout');
-const roleFactoryCarrier = require('role.factoryCarrier');
+const roleHarvester = require('harvester');
+const roleUpgrader = require('upgrader');
+const roleBuilder = require('builder');
+const roleCarrier = require('carrier');
+const roleRepairman = require('repairman');
+const roleRescuer = require('rescuer');
+const roleMiner = require('miner');
+const roleRemoteHaverster = require('remoteHarvester');
+const roleScout = require('scout');
+const roleFactoryCarrier = require('factoryCarrier');
+const creepManager = require('creepManager');
 
 const runTower = require('tower')
 
-const { SPAWN_NAME, EAST_NEIGHBOR_ROOM_NAME, EAST_NEIGHBOR_LINK, STORAGE_LINK, MAIN_ROOM_NAME} = require('./constant');
-const { checkHarvesterBySourceId } = require('./room.functions');
-const { createCreepBody } = require('./util');
-const { manageLink, getMineralAmount, findResourceByRoom, manageFactory, placeSellOrder, sellToOrder, resetOrderSaleFlag, resetOrderPlacedFlag } = require("./room.functions");
+const {  EAST_NEIGHBOR_LINK, STORAGE_LINK,CREEP_ROLE, SPAWN_NAME, WEST_NEIGHBOR_ROOM_NAME, EAST_NEIGHBOR_ROOM_NAME} = require('./constant');
+const { manageLink, manageFactory, placeSellOrder, sellToOrder, resetOrderSaleFlag, resetOrderPlacedFlag, controlClaim} = require("./room.functions");
 
 module.exports.loop = function () {
-    const room = Game.spawns[SPAWN_NAME].room;
-    const harvesters = _.filter(Game.creeps, (creep) => creep.memory.role === 'harvester');
-    const upgraders = _.filter(Game.creeps, (creep) => creep.memory.role === 'upgrader');
-    const builders = _.filter(Game.creeps, (creep) => creep.memory.role === 'builder');
-    const carriers = _.filter(Game.creeps, (creep) => creep.memory.role === 'carrier');
-    const repairmen = _.filter(Game.creeps, (creep) => creep.memory.role === 'repairman');
-    const rescuers = _.filter(Game.creeps, (creep) => creep.memory.role === 'rescuer');
-    const miners = _.filter(Game.creeps, (creep) => creep.memory.role === 'miner');
-    const remoteHarvesters = _.filter(Game.creeps, (creep) => creep.memory.role === 'remoteHarvester');
-    const scouts = _.filter(Game.creeps, (creep) => creep.memory.role === 'scout');
-    const factoryCarriers = _.filter(Game.creeps, (creep) => creep.memory.role === 'factoryCarrier');
-
-    for(var nameInMemory in Memory.creeps) {
+    const myRooms = _.filter(Game.rooms, (room) => room.controller && room.controller.my);
+    for(let nameInMemory in Memory.creeps) {
         if(!Game.creeps[nameInMemory]) {
             delete Memory.creeps[nameInMemory];
         }
     }
 
-    if((harvesters.length < 1 || carriers < 1) && rescuers < 1) {
-        const newName = 'Rescuer' + Game.time;
-        Game.spawns[SPAWN_NAME].spawnCreep(createCreepBody({numWork: 1, numMove: 1, numCarry: 1}), newName,
-            {memory: {role: 'rescuer'}});
-    }
-
-    if(carriers.length < 2) {
-        const newName = 'Carrier' + Game.time;
-        Game.spawns[SPAWN_NAME].spawnCreep(createCreepBody({numCarry: 10, numMove: 10}), newName,
-            {memory: {role: 'carrier'}});
-    }
-
-    if(harvesters.length < 2) {
-        const newName = 'Harvester' + Game.time;
-        const sources = Game.spawns[SPAWN_NAME].room.find(FIND_SOURCES);
-        if(checkHarvesterBySourceId(MAIN_ROOM_NAME, 'harvester', sources[0].id)) {
-            Game.spawns[SPAWN_NAME].spawnCreep(createCreepBody({numWork: 7, numMove: 2}), newName,
-                {memory: {role: 'harvester', sourceId: sources[1].id}});
-        }else {
-            Game.spawns[SPAWN_NAME].spawnCreep(createCreepBody({numWork: 7, numMove: 2}), newName,
-                {memory: {role: 'harvester', sourceId: sources[0].id}});
+    myRooms.forEach((room) => {
+        const spawn = room.find(FIND_MY_SPAWNS)[0];
+        if(spawn) {
+            creepManager(spawn);
         }
-    }
+        const towers = room.find(FIND_STRUCTURES, {
+            filter: (structure) => {
+                return structure.structureType === STRUCTURE_TOWER &&
+                    structure.store.getUsedCapacity(RESOURCE_ENERGY) > 0;
+            }
+        });
 
-    if(upgraders.length < 2) {
-        const newName = 'Upgrader' + Game.time;
-        Game.spawns[SPAWN_NAME].spawnCreep(createCreepBody({numWork: 12, numCarry: 8, numMove: 8}), newName,
-            {memory: {role: 'upgrader'}});
-    }
-
-    if(builders.length < 2 && room.find(FIND_CONSTRUCTION_SITES).length > 0) {
-        const newName = 'Builder' + Game.time;
-        Game.spawns[SPAWN_NAME].spawnCreep(createCreepBody({numWork: 8, numCarry: 4, numMove: 4}), newName,
-            {memory: {role: 'builder'}});
-    }
-
-    if(miners.length < 1) {
-        const newName = 'Miner' + Game.time;
-        Game.spawns[SPAWN_NAME].spawnCreep(createCreepBody({numWork: 8, numCarry: 4, numMove: 4}), newName,
-            {memory: {role: 'miner'}});
-    }
-
-    if(remoteHarvesters.length < 2) {
-        const resources = findResourceByRoom(EAST_NEIGHBOR_ROOM_NAME);
-        const newName = 'RemoteHarvester' + Game.time;
-        if(checkHarvesterBySourceId(EAST_NEIGHBOR_ROOM_NAME, 'remoteHarvester', resources[0].id)) {
-            Game.spawns[SPAWN_NAME].spawnCreep(createCreepBody({numWork: 7, numCarry: 7, numMove: 7}), newName,
-                {memory: {role: 'remoteHarvester', sourceId: resources[1].id}});
-        }else {
-            Game.spawns[SPAWN_NAME].spawnCreep(createCreepBody({numWork: 7, numCarry: 7, numMove: 7}), newName,
-                {memory: {role: 'remoteHarvester', sourceId: resources[0].id}});
+        for(let tower of towers) {
+            runTower(tower);
         }
-    }
+    });
 
-    if(scouts.length < 1) {
-        const newName = 'Scout' + Game.time;
-        Game.spawns[SPAWN_NAME].spawnCreep(createCreepBody({numMove: 4}), newName,
-            {memory: {role: 'scout'}});
-    }
-
-    if(factoryCarriers.length < 1) {
-        const newName = 'FactoryCarrier' + Game.time;
-        Game.spawns[SPAWN_NAME].spawnCreep(createCreepBody({numCarry: 10, numMove: 10}), newName,
-            {memory: {role: 'factoryCarrier'}});
-    }
-
-
-    if(repairmen.length < 0) {
-        const newName = 'Repairman' + Game.time;
-        Game.spawns[SPAWN_NAME].spawnCreep(createCreepBody({numWork: 8, numCarry: 4, numMove: 4}), newName,
-            {memory: {role: 'repairman'}});
-    }
 
     for(let name in Game.creeps) {
         const creep = Game.creeps[name];
@@ -131,7 +64,7 @@ module.exports.loop = function () {
         if(creep.memory.role === 'miner') {
             roleMiner.run(creep);
         }
-        if(creep.memory.role === 'remoteHarvester') {
+        if(creep.memory.role === CREEP_ROLE["REMOTE_HARVESTER"]) {
             roleRemoteHaverster.run(creep);
         }
         if(creep.memory.role === 'scout') {
@@ -142,26 +75,19 @@ module.exports.loop = function () {
         }
     }
 
-    const towers = Game.spawns[SPAWN_NAME].room.find(FIND_STRUCTURES, {
-        filter: (structure) => {
-            return structure.structureType === STRUCTURE_TOWER &&
-                   structure.store.getUsedCapacity(RESOURCE_ENERGY) > 0;
-        }
-    });
-
-    for(let tower of towers) {
-        runTower(tower);
-    }
-
     manageLink(EAST_NEIGHBOR_LINK, STORAGE_LINK);
 
     manageFactory(RESOURCE_LEMERGIUM_BAR);
 
-    // placeSellOrder(RESOURCE_LEMERGIUM_BAR, 165, 5000);
+    //placeSellOrder(RESOURCE_LEMERGIUM_BAR, 175, 10000);
 
     // resetOrderPlacedFlag();
 
     // sellToOrder("666f7d27edbe34001246874f", 350, MAIN_ROOM_NAME);
 
     // resetOrderSaleFlag();
+
+    // creepManager(Game.spawns[SPAWN_NAME]);
+
+    //controlClaim(Game.spawns[SPAWN_NAME], 'E36S58');
 }

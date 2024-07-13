@@ -1,5 +1,6 @@
 const { MAIN_ROOM_FACTORY } = require('constant');
-const {MAIN_ROOM_NAME} = require("./constant");
+const {MAIN_ROOM_NAME} = require("constant");
+const roleClaimer = require("claimer");
 function manageLink(senderId, receiverId) {
     const senderLink = Game.getObjectById(senderId);
     const receiverLink = Game.getObjectById(receiverId);
@@ -33,7 +34,11 @@ function getDroppedMineral(room) {
 
 function findResourceByRoom(roomName) {
     const room = Game.rooms[roomName];
-    return room.find(FIND_SOURCES);
+    if(room) {
+        return room.find(FIND_SOURCES);
+    }else {
+        return null;
+    }
 }
 
 function manageFactory(commodityType) {
@@ -132,6 +137,25 @@ function resetOrderSaleFlag() {
     console.log('Order sale flag reset.');
 }
 
+function controlClaim(spawn, targetRoomName) {
+    const room = Game.rooms[targetRoomName];
+    if(!room) {
+        console.log(targetRoomName + " is not visible");
+        return;
+    }
+    if(room.controller && room.controller.my) {
+        console.log(targetRoomName + " is already be claimed");
+        return;
+    }
+    const claimer = _.filter(Game.creeps, (creep) => creep.memory.role === 'claimer');
+    if(claimer.length === 0) {
+        let newName = 'Claimer' + Game.time;
+        spawn.spawnCreep([CLAIM, MOVE, MOVE, MOVE, MOVE], newName, {memory: {role: 'claimer', claiming: false}});
+    }else {
+        roleClaimer.run(claimer[0], targetRoomName);
+    }
+}
+
 module.exports = {
     manageLink,
     getMineralAmount,
@@ -143,5 +167,6 @@ module.exports = {
     placeSellOrder,
     sellToOrder,
     resetOrderSaleFlag,
-    resetOrderPlacedFlag
+    resetOrderPlacedFlag,
+    controlClaim
 }

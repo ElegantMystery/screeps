@@ -1,8 +1,8 @@
-const { storeEnergy, borderPosition } = require("creep.functions")
-const { SPAWN_NAME, EAST_NEIGHBOR_LINK } = require('./constant');
-const {storeLink} = require("./creep.functions");
+const { borderPosition } = require("creep.functions")
+const { SPAWN_NAME, EAST_NEIGHBOR_LINK } = require('constant');
+const {storeLink} = require("creep.functions");
 
-const roleRemoteHarvester = {
+const remoteHarvester = {
     run: function (creep) {
         const source = Game.getObjectById(creep.memory.sourceId);
 
@@ -33,4 +33,4 @@ const roleRemoteHarvester = {
     }
 };
 
-module.exports = roleRemoteHarvester
+module.exports = remoteHarvester

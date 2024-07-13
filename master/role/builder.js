@@ -1,7 +1,7 @@
-const { SPAWN_NAME } = require('./constant');
-const { collectEnergyFromStorage, buildStructure } = require('./creep.functions');
+const { SPAWN_NAME } = require('constant');
+const { collectEnergyFromStorage, buildStructure } = require('creep.functions');
 
-const roleBuilder = {
+const builder = {
     run: function(creep) {
         if(creep.memory.building && creep.store[RESOURCE_ENERGY] === 0) {
             creep.memory.building = false;
@@ -12,9 +12,9 @@ const roleBuilder = {
         if (!creep.memory.building) {
             collectEnergyFromStorage(creep);
         } else {
-           buildStructure(creep);
+            buildStructure(creep);
         }
     }
 };
 
-module.exports = roleBuilder;
+module.exports = builder;

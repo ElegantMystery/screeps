@@ -1,7 +1,7 @@
 const { MAIN_ROOM_FACTORY } = require('constant');
 const { collectEnergyFromStorage } = require('creep.functions');
 
-const roleFactoryCarrier = {
+const factoryCarrier = {
     run: function(creep, commodityType) {
         const factory = Game.getObjectById(MAIN_ROOM_FACTORY);
         const components = COMMODITIES[commodityType].components;
@@ -38,4 +38,4 @@ const roleFactoryCarrier = {
     }
 };
 
-module.exports = roleFactoryCarrier;
+module.exports = factoryCarrier;
